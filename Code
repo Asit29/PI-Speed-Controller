@@ -1,0 +1,42 @@
+#include <LiquidCrystal.h>  
+
+LiquidCrystal lcd(12, 11, 7, 6, 5, 4);     
+float t_a=0,t_b,T_c=0,T_p=0,T_e=0,error,cumError=0,S,R;
+float kc=1, Ti=1;
+
+void setup () 
+{    
+   pinMode(3,OUTPUT);
+   pinMode(14,INPUT);
+   pinMode(2,INPUT_PULLUP);    
+   attachInterrupt(digitalPinToInterrupt(2),interr,RISING);  
+   lcd.begin(16,2);
+}  
+
+void loop() 
+{    
+   R=analogRead(14); 
+   T_c = millis();   
+   T_e = (double)(T_c - T_p);  
+   error = R - S;  
+   cumError += error * T_e/1000;   
+   double out_n = kc*error + cumError*Ti;
+   int out_c=max(min(out_n,255),0);
+   analogWrite(3,out_c); 
+   lcd.setCursor(0,0);   
+   lcd.print("DESIRED - "); 
+   lcd.setCursor(11,0); 
+   lcd.print(R);
+   lcd.setCursor(0,1);   
+   lcd.print("RPM - "); 
+   lcd.setCursor(6,1);   
+   lcd.print(S); 
+   T_p = T_c;
+}  
+
+void interr()
+{
+   t_a=micros();
+   S=60000000/((t_a-t_b)*24);
+   t_b=t_a;
+}
